@@ -1,0 +1,230 @@
+#Creating a virtual environment
+  python -m venv venv
+  source ./venv/Scripts/activate
+
+## Creating requirements.txt
+  touch requirements.txt
+  pandas
+  requests
+  boto3
+  snowflake-connector-python
+  python-dotenv
+pip install -r requirements.txt
+## creating .env file to save API key from Polygon.io
+    touch .env
+    POLYGON_API_KEY=abcd1234yourkey
+    GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/credentials.json
+    GCP_PROJECT_ID=my-stock-project
+    BQ_DATASET_NAME=stock_dataset
+## Load to Jupyter
+   pip install python-dotenv
+   from dotenv import load_dotenv
+   import os
+
+   load_dotenv()
+
+   api_key = os.getenv("POLYGON_API_KEY")
+   project_id = os.getenv("GCP_PROJECT_ID")
+## Setting Up GOOGLE_APPLICATION_CREDENTIALS on Windows
+   source venv/Scripts/activate
+   python test_connection.py
+## Fetching API of multiple stocks with a time delay of 12 seconds
+import requests
+import pandas as pd
+import time
+
+def get_stock_data(symbol, api_key):
+    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}&outputsize=full"
+    response = requests.get(url)
+    data = response.json()
+
+    if "Time Series (Daily)" not in data:
+        raise Exception(f"No data returned for {symbol}. Response: {data}")
+
+    df = pd.DataFrame.from_dict(data["Time Series (Daily)"], orient='index')
+    df = df.rename(columns={
+        "1. open": "open",
+        "2. high": "high",
+        "3. low": "low",
+        "4. close": "close",
+        "5. volume": "volume"
+    })
+
+    df["symbol"] = symbol
+    df.index.name = "date"
+    df.reset_index(inplace=True)
+    return df
+
+api_key = "TKHOK0NCUKX0L35J"
+
+symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "ABNB"]
+all_data = pd.DataFrame()
+
+for symbol in symbols:
+    try:
+        df = get_stock_data(symbol, api_key)
+        all_data = pd.concat([all_data, df], ignore_index=True)
+        print(f"✅ Fetched data for {symbol}")
+    except Exception as e:
+        print(f"❌ Failed to fetch data for {symbol}: {e}")
+    time.sleep(12)  # Wait 12 seconds to avoid API throttling
+
+print(all_data.head())
+## save the above as get_multiple_stocks_with_delay.py
+## Run the script in Git Bash
+  cd /c/Users/Dell/stock-market-elt
+  source venv/Scripts/activate
+  python get_multiple_stocks_with_delay.py
+## Save as CSV file
+import requests
+import pandas as pd
+import time
+import os
+from dotenv import load_dotenv
+
+# Load your API key from .env
+load_dotenv()
+API_KEY = os.getenv("POLYGON_API_KEY")
+
+# List of stock symbols to pull data for
+symbols = ['AAPL', 'GOOGL', 'MSFT']  # You can customize this list
+
+# Create an empty DataFrame to hold all data
+all_data = pd.DataFrame()
+
+# Loop through each symbol
+for symbol in symbols:
+    print(f"Fetching data for {symbol}...")
+    url = f"https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/2023-01-01/2023-12-31?adjusted=true&sort=asc&limit=120&apiKey={API_KEY}"
+    
+    response = requests.get(url)
+    data = response.json()
+    
+    if "results" in data:
+        df = pd.DataFrame(data["results"])
+        df["symbol"] = symbol
+        df["date"] = pd.to_datetime(df["t"], unit='ms')  # Convert timestamp
+        all_data = pd.concat([all_data, df], ignore_index=True)
+    else:
+        print(f"⚠️ No data found for {symbol}. Error: {data.get('error', 'Unknown error')}")
+    
+    time.sleep(1.1)  # Respect API rate limits
+
+# Save to CSV
+output_file = "multiple_stocks_data.csv"
+all_data.to_csv(output_file, index=False)
+print(f"✅ Data saved to {output_file}")
+
+## Load Excel File into BigQuery
+ # Installing libraries
+   pip install pandas openpyxl google-cloud-bigquery
+#Loading python code
+import os
+import pandas as pd
+from google.cloud import bigquery
+from dotenv import load_dotenv
+
+load_dotenv()
+
+print("Starting load.py")
+
+project_id = os.getenv("GCP_PROJECT_ID")
+dataset_id = os.getenv("BQ_DATASET_NAME")
+table_name = "stock_data"
+excel_file_path = "your_excel_file.xlsx"
+
+print(f"Project ID: {project_id}")
+print(f"Dataset ID: {dataset_id}")
+print(f"Excel path: {excel_file_path}")
+
+client = bigquery.Client()
+
+df = pd.read_excel(excel_file_path)
+print(f"Read {len(df)} rows from Excel")
+
+table_id = f"{project_id}.{dataset_id}.{table_name}"
+
+job = client.load_table_from_dataframe(df, table_id)
+job.result()
+
+print(f"✅ Loaded {job.output_rows} rows to {table_id}")
+#Running the script
+python load.py
+
+##Transformation
+#Navigating to dbt folder
+cd dbt
+#Setting up profiles.yml to connect to data warehouse
+~/.dbt/profiles.yml
+#Creating our home directory
+my_dbt_project:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: your_gcp_project_id
+      dataset: your_bigquery_dataset
+      threads: 1
+      keyfile: /path/to/your/service-account.json
+      timeout_seconds: 300
+      location: US
+#Running and Testing dbt commands
+dbt run
+dbt test
+
+## Automation with Prefect
+#Installing Prefect
+pip install prefect
+#Creating a python flow script
+from prefect import flow, task
+import subprocess
+
+@task
+def extract():
+    subprocess.run(["python", "extract.py"], check=True)
+
+@task
+def load():
+    subprocess.run(["python", "load.py"], check=True)
+
+@task
+def transform():
+    subprocess.run(["dbt", "run"], cwd="dbt/my_dbt_project", check=True)
+
+@flow(name="Stock Market ETL")
+def etl_pipeline():
+    extract()
+    load()
+    transform()
+
+if __name__ == "__main__":
+    etl_pipeline()
+
+#Running it
+python etl_flow.py
+
+## Scheduling with Prefect
+#Creating etl_flow.py
+from prefect import flow, task
+import subprocess
+
+@task
+def extract():
+    print("📥 Running get_multiple_stocks_with_delay.py...")
+    subprocess.run(["python", "get_multiple_stocks_with_delay.py"], check=True)
+
+@flow(name="Stock Extract Flow")
+def etl_pipeline():
+    extract()
+
+if __name__ == "__main__":
+    etl_pipeline()
+#Running It Manually Once to Test
+python etl_flow.py
+#Creating a Scheduled Deployment
+prefect deployment build etl_flow.py:etl_pipeline -n "daily-stock-extract" -q default -s "0 9 * * *"
+
+
+
+
