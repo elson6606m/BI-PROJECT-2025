@@ -1,8 +1,8 @@
 # 📊 Stock Market ELT Project — Final BI Assignment
 ## 🎓 MADSC301 - Business Intelligence
 * *Student Project (Spring Semester 2025)*
-* *Instructor: [Add Name]*
-* *Submitted by: [Your Name]*
+* *Instructor: Prof. Hachem*
+* *Submitted by: Elson Shaji*
 ## Overview
 This project demonstrates a complete ETL/ELT pipeline for stock market data analysis, using real-time API data, cloud-based data warehousing, automation, and BI dashboarding. The workflow was designed to simulate a real-world data engineering scenario and fully meets the MADSC301 final assignment objectives.
 
