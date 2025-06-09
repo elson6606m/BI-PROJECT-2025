@@ -1,0 +1,5 @@
+/logs/scheduler/latest
+/stock-market-elt-key.json
+AIRFLOW_UID=50000
+POLYGON_API_KEY=6uWcwwyMtCE3r8vUUKIIOtF3FyowAOdV
+GOOGLE_APPLICATION_CREDENTIALS=C:\Users\Dell\stock-market-elt\chrome-genre-461713-e3-066d92e45b3d.json
