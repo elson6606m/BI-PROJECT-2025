@@ -43,12 +43,77 @@ This project demonstrates a complete ETL/ELT pipeline for stock market data anal
 
 ## 🧠 Business Case
 The goal of this pipeline is to analyze real-time stock price trends, trading volume, and moving averages across multiple tickers. This analysis supports investment decisions, price forecasting, and technical analysis using a visual dashboard.
+## Tools & Technologies
+* Polygon.io : To Extract data 
+* Big Query : To Load data
+* Pandas : To clean and transform data 
+* Looker Studio : To visualize the data
+* Prefect : To automate the ELT pipeline
+* cron jobs : To schedule the ELT pipeline
+  
 # ✅ Project Components
 ## 1. 📥 Data Collection
 * *Source:* *[Polygon.io](https://polygon.io/)*
 * *Method:* API call to aggregates endpoint (daily OHLCV for multiple stock symbols)
 * *Format:* .csv and .xlsx
 * *API Key:* Managed securely using .env
+
+   ```python
+   import time
+   import requests
+   import pandas as pd
+
+    def get_stock_data(symbol, api_key):
+    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}&outputsize=full"
+    response = requests.get(url)
+    data = response.json()
+
+        if "Time Series (Daily)" not in data:
+           raise Exception(f"No data returned for {symbol}. Response: {data}")
+
+     df = pd.DataFrame.from_dict(data["Time Series (Daily)"], orient='index')
+     df = df.rename(columns={
+        "1. open": "open",
+        "2. high": "high",
+        "3. low": "low",
+        "4. close": "close",
+        "5. volume": "volume"
+    })
+
+    df["symbol"] = symbol
+    df.index.name = "date"
+    df.reset_index(inplace=True)
+
+    # Convert columns to correct data types
+    df["date"] = pd.to_datetime(df["date"])
+    df[["open", "high", "low", "close"]] = df[["open", "high", "low", "close"]].astype(float)
+    df["volume"] = df["volume"].astype(int)
+
+    return df
+   # Stock symbols
+     symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "ABNB"]
+
+   # Container for all data
+     all_data = pd.DataFrame()
+
+  # Fetch data with delay
+     for symbol in symbols:
+    try:
+        df = get_stock_data(symbol, api_key)
+        all_data = pd.concat([all_data, df], ignore_index=True)
+        print(f"Fetched data for {symbol}")
+    except Exception as e:
+        print(f"Failed to fetch data for {symbol}: {e}")
+    time.sleep(12)  # 12-second delay to avoid rate limits
+
+   # Print summary of symbols fetched
+      print("\nSymbols included in final data:", all_data["symbol"].unique())
+      print("\nSample data (2 rows per stock):")
+      print(all_data.groupby("symbol").head(2))
+
+   # Optional: Save to CSV
+      all_data.to_csv("multiple_stocks_data.csv", index=False)
+
 ## 2. 🧹 Data Cleaning & Preparation
 * *Used Pandas to:*
    * *Handle missing values*
@@ -56,7 +121,9 @@ The goal of this pipeline is to analyze real-time stock price trends, trading vo
    * *Rename ambiguous columns*
    * *Filter stock tickers and columns*
    * *Converted Excel to clean DataFrame for upload*
-
+  ```python
+  
+     
 ## 3. 🗄 Data Storage
 * *Warehouse: Google BigQuery (GCP)*
 * *Staging Table:* multiple_stocks
@@ -109,13 +176,13 @@ Prefect was used in local execution mode (no Prefect Cloud account needed), whic
 
 1. Installed Prefect into the Python virtual environment:
 
-   bash
+    ```bash
    pip install prefect
    
 
 2. Created a Flow using etl_flow.py, which defines the sequence of tasks:
 
-   python
+    ```python
    from prefect import flow, task
    import subprocess
 
@@ -140,14 +207,14 @@ Prefect was used in local execution mode (no Prefect Cloud account needed), whic
 
 3. Built a Deployment (used for scheduling):
 
-   bash
+    ```bash
    prefect deployment build etl_flow.py:etl_pipeline -n "daily-stock-job" 
 
   
 
 4. *Started a Local Worker* to listen for flow runs:
 
-   bash
+    ```bash
    prefect worker start --pool 'default'
    
 
