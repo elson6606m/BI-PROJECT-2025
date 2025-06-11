@@ -46,7 +46,7 @@ The goal of this pipeline is to analyze real-time stock price trends, trading vo
 ## Tools & Technologies
 * Polygon.io : To Extract data 
 * Big Query : To Load data
-* Pandas : To clean and transform data 
+* Bigquery : To clean and transform data 
 * Looker Studio : To visualize the data
 * Prefect : To automate the ELT pipeline
 * cron jobs : To schedule the ELT pipeline
@@ -163,9 +163,8 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
    * *Line Chart (Closing price over time)*
    * *Bar Chart (Daily trading volume)*
    * *Table View (Raw data inspection)*
-   * *Combo Chart (High vs. Low)*
    * *Scatter Plot (Close vs Volume)*
-   * *Calculated fields for Moving Averages*
+ 
 
 ## 6. ⚙ Scheduling & Automation
 
