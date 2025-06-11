@@ -115,15 +115,33 @@ The goal of this pipeline is to analyze real-time stock price trends, trading vo
       all_data.to_csv("multiple_stocks_data.csv", index=False)
 
 ## 2. 🧹 Data Cleaning & Preparation
-* *Used Pandas to:*
+* *Used Bigquery to:*
    * *Handle missing values*
    * *Normalize date format*
    * *Rename ambiguous columns*
    * *Filter stock tickers and columns*
    * *Converted Excel to clean DataFrame for upload*
   ```python
-  
-     
+     name: 'my_dbt_project'
+     version: '1.0.0'
+
+  # This setting configures which "profile" dbt uses for this project.
+    profile: 'my_dbt_project'
+
+   # These configurations specify where dbt should look for different types of files.
+   # The `model-paths` config, for example, states that models in this project can be
+   # found in the "models/" directory. You probably won't need to change these!
+   model-paths: ["models"]
+   analysis-paths: ["analyses"]
+   test-paths: ["tests"]
+   seed-paths: ["seeds"]
+   macro-paths: ["macros"]
+   snapshot-paths: ["snapshots"]
+
+   clean-targets:         # directories to be removed by `dbt clean`
+     - "target"
+     - "dbt_packages"
+     ```
 ## 3. 🗄 Data Storage
 * *Warehouse: Google BigQuery (GCP)*
 * *Staging Table:* multiple_stocks
